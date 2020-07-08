@@ -226,13 +226,22 @@ class TimeSeries(commands.Cog):
             return
         try:
             p = Point("Commands")
+            cmdtotal = 0
             for k, v in self.commands_cache["session"].items():
+                cmdtotal += v
                 p.field(str(k), v)
             call_sync_as_async(self.client["write_api"].write, bucket=self.client["bucket"], record=p)
 
             p = Point("Commands Persistent")
+            cmdtotalall = 0
             for k, v in self.commands_cache["persistent"].items():
                 p.field(str(k), v)
+                cmdtotalall += v
+            call_sync_as_async(self.client["write_api"].write, bucket=self.client["bucket"], record=p)
+            
+            p = Point("Totals")
+            p.field("Alltime", cmdtotalall)
+            p.field("Session", cmdtotal)
             call_sync_as_async(self.client["write_api"].write, bucket=self.client["bucket"], record=p)
         except Exception as err:
             log.exception("Error while saving command data to Influx", exc_info=err)
